@@ -6,7 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.PlaylistPlay
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,11 +21,13 @@ import com.cosmic.ymusicplayer.ui.component.MiniPlayer
 import com.cosmic.ymusicplayer.ui.navigation.Screen
 import com.cosmic.ymusicplayer.ui.viewmodel.MainViewModel
 import com.cosmic.ymusicplayer.ui.viewmodel.MusicViewModel
+import com.cosmic.ymusicplayer.ui.viewmodel.SettingsViewModel
 
 @Composable
 fun MainScreen(
     mainViewModel: MainViewModel,
-    musicViewModel: MusicViewModel
+    musicViewModel: MusicViewModel,
+    settingsViewModel: SettingsViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -64,9 +66,9 @@ fun MainScreen(
                 NavigationBar {
                     val items = listOf(
                         Triple(Screen.Home, "Home", Icons.Default.Home),
-                        Triple(Screen.Search, "Search", Icons.Default.Search),
                         Triple(Screen.Playlists, "Playlists", Icons.Default.PlaylistPlay),
-                        Triple(Screen.Library, "Library", Icons.Default.LibraryMusic)
+                        Triple(Screen.Library, "Library", Icons.Default.LibraryMusic),
+                        Triple(Screen.Settings, "Settings", Icons.Default.Settings)
                     )
                     
                     items.forEach { (screen, label, icon) ->
@@ -104,15 +106,18 @@ fun MainScreen(
                     }
                 )
             }
-            composable<Screen.Search> {
-                // Similar to Home but maybe with different focus
-                Text("Search Screen - Coming Soon", modifier = Modifier.padding(16.dp))
-            }
             composable<Screen.Playlists> {
                 Text("Playlists Screen - Coming Soon", modifier = Modifier.padding(16.dp))
             }
             composable<Screen.Library> {
                 Text("Library Screen (Favorites/History) - Coming Soon", modifier = Modifier.padding(16.dp))
+            }
+            composable<Screen.Settings> {
+                val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
+                SettingsScreen(
+                    currentThemeMode = themeMode,
+                    onThemeModeChange = { settingsViewModel.setThemeMode(it) }
+                )
             }
             composable<Screen.Player> {
                 PlayerScreen(

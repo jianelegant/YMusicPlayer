@@ -7,13 +7,13 @@ sealed interface Screen {
     data object Home : Screen
     
     @Serializable
-    data object Search : Screen
-    
-    @Serializable
     data object Playlists : Screen
     
     @Serializable
     data object Library : Screen
+
+    @Serializable
+    data object Settings : Screen
     
     @Serializable
     data object Player : Screen

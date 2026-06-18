@@ -8,7 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.Text
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -17,14 +17,14 @@ import com.cosmic.ymusicplayer.data.repository.MusicRepository
 import com.cosmic.ymusicplayer.playback.MusicController
 import com.cosmic.ymusicplayer.ui.screen.MainScreen
 import com.cosmic.ymusicplayer.ui.theme.YMusicPlayerTheme
-import com.cosmic.ymusicplayer.ui.viewmodel.MainViewModel
-import com.cosmic.ymusicplayer.ui.viewmodel.MusicViewModel
+import com.cosmic.ymusicplayer.ui.viewmodel.*
 import com.cosmic.ymusicplayer.ui.viewmodel.ViewModelFactory
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var mainViewModel: MainViewModel
     private lateinit var musicViewModel: MusicViewModel
+    private lateinit var settingsViewModel: SettingsViewModel
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -45,14 +45,23 @@ class MainActivity : ComponentActivity() {
 
         mainViewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
         musicViewModel = ViewModelProvider(this, factory)[MusicViewModel::class.java]
+        settingsViewModel = ViewModelProvider(this, factory)[SettingsViewModel::class.java]
 
         checkAndRequestPermissions()
 
         setContent {
-            YMusicPlayerTheme {
+            val themeMode by settingsViewModel.themeMode.collectAsState()
+            val darkTheme = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            YMusicPlayerTheme(darkTheme = darkTheme) {
                 MainScreen(
                     mainViewModel = mainViewModel,
-                    musicViewModel = musicViewModel
+                    musicViewModel = musicViewModel,
+                    settingsViewModel = settingsViewModel
                 )
             }
         }

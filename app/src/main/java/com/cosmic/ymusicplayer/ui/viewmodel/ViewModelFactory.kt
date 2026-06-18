@@ -18,6 +18,9 @@ class ViewModelFactory(
             modelClass.isAssignableFrom(MusicViewModel::class.java) -> {
                 MusicViewModel(repository) as T
             }
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) -> {
+                SettingsViewModel() as T
+            }
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
