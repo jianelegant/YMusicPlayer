@@ -17,6 +17,9 @@ import com.cosmic.ymusicplayer.R
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class MusicPlaybackService : Service() {
 
@@ -116,7 +119,7 @@ class MusicPlaybackService : Service() {
             }
         }
 
-        instance = this
+        _player.value = musicPlayer
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -145,7 +148,7 @@ class MusicPlaybackService : Service() {
         mediaSession?.release()
         mediaSession = null
         musicPlayer.release()
-        instance = null
+        _player.value = null
         super.onDestroy()
     }
 
@@ -183,9 +186,9 @@ class MusicPlaybackService : Service() {
     }
 
     companion object {
-        @Volatile
-        private var instance: MusicPlaybackService? = null
+        private val _player = MutableStateFlow<MusicPlayer?>(null)
+        val player: StateFlow<MusicPlayer?> = _player.asStateFlow()
 
-        fun getPlayer(): MusicPlayer? = instance?.musicPlayer
+        fun getPlayer(): MusicPlayer? = _player.value
     }
 }

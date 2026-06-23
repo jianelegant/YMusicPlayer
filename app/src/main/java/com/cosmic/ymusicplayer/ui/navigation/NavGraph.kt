@@ -54,7 +54,7 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val nowPlayingViewModel: NowPlayingViewModel = viewModel(
-        factory = NowPlayingViewModel.Factory(app.musicPlayer, app.musicRepository)
+        factory = NowPlayingViewModel.Factory(app.musicPlayerFlow, app.musicRepository)
     )
     val libraryViewModel: LibraryViewModel = viewModel(
         factory = LibraryViewModel.Factory(app.musicRepository, app.playlistRepository)

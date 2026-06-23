@@ -12,6 +12,7 @@ import com.cosmic.ymusicplayer.util.ThemeManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class YMusicPlayerApp : Application() {
@@ -36,10 +37,8 @@ class YMusicPlayerApp : Application() {
     // Theme
     val themeManager by lazy { ThemeManager(this) }
 
-    // Player — delegates to the service instance
-    val musicPlayer: MusicPlayer
-        get() = MusicPlaybackService.getPlayer()
-            ?: throw IllegalStateException("MusicPlaybackService not started")
+    // Player — flow-based so consumers observe async service startup
+    val musicPlayerFlow: StateFlow<MusicPlayer?> = MusicPlaybackService.player
 
     fun startMusicService() {
         val intent = Intent(this, MusicPlaybackService::class.java)

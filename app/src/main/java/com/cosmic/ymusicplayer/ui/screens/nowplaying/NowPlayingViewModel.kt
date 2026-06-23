@@ -13,19 +13,22 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class NowPlayingViewModel(
-    private val musicPlayer: MusicPlayer,
+    private val musicPlayerFlow: StateFlow<MusicPlayer?>,
     private val musicRepository: MusicRepository
 ) : ViewModel() {
 
-    val playerState: StateFlow<PlayerState> = musicPlayer.playerState
+    val playerState: StateFlow<PlayerState> = musicPlayerFlow
+        .flatMapLatest { player ->
+            player?.playerState ?: flowOf(PlayerState())
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), PlayerState())
 
-    // Position updates tick
+    // Position updates tick (mirrors the service loop for UI smoothness)
     init {
         viewModelScope.launch {
             while (isActive) {
                 if (playerState.value.isPlaying) {
-                    musicPlayer.updatePosition()
+                    musicPlayerFlow.value?.updatePosition()
                 }
                 kotlinx.coroutines.delay(250)
             }
@@ -33,41 +36,44 @@ class NowPlayingViewModel(
     }
 
     fun togglePlayPause() {
-        musicPlayer.togglePlayPause()
+        musicPlayerFlow.value?.togglePlayPause()
     }
 
     fun skipToNext() {
-        musicPlayer.skipToNext()
+        musicPlayerFlow.value?.skipToNext()
     }
 
     fun skipToPrevious() {
-        musicPlayer.skipToPrevious()
+        musicPlayerFlow.value?.skipToPrevious()
     }
 
     fun seekTo(positionMs: Long) {
-        musicPlayer.seekTo(positionMs)
+        musicPlayerFlow.value?.seekTo(positionMs)
     }
 
     fun onSeekFinished() {
-        musicPlayer.onSeekFinished()
+        musicPlayerFlow.value?.onSeekFinished()
     }
 
     fun cycleRepeatMode() {
+        val player = musicPlayerFlow.value ?: return
         val next = when (playerState.value.repeatMode) {
             RepeatMode.OFF -> RepeatMode.ALL
             RepeatMode.ALL -> RepeatMode.ONE
             RepeatMode.ONE -> RepeatMode.OFF
         }
-        musicPlayer.setRepeatMode(next)
+        player.setRepeatMode(next)
     }
 
     fun toggleShuffle() {
-        musicPlayer.toggleShuffle()
+        musicPlayerFlow.value?.toggleShuffle()
     }
 
     fun playSong(songs: List<Song>, index: Int) {
-        musicPlayer.setPlaylist(songs, index)
-        musicPlayer.play()
+        musicPlayerFlow.value?.let { player ->
+            player.setPlaylist(songs, index)
+            player.play()
+        }
         viewModelScope.launch {
             songs.getOrNull(index)?.let { musicRepository.addToHistory(it.id) }
         }
@@ -75,17 +81,17 @@ class NowPlayingViewModel(
 
     fun toggleFavorite() {
         viewModelScope.launch {
-            musicPlayer.getCurrentSong()?.let { musicRepository.toggleFavorite(it) }
+            musicPlayerFlow.value?.getCurrentSong()?.let { musicRepository.toggleFavorite(it) }
         }
     }
 
     class Factory(
-        private val musicPlayer: MusicPlayer,
+        private val musicPlayerFlow: StateFlow<MusicPlayer?>,
         private val musicRepository: MusicRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return NowPlayingViewModel(musicPlayer, musicRepository) as T
+            return NowPlayingViewModel(musicPlayerFlow, musicRepository) as T
         }
     }
 }
